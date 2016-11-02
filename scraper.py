@@ -22,7 +22,7 @@ def scrapePage(pageString):
     cntDetail = tree.xpath('/html/body/div[@id="main"]/div[@id="cnt"]/div[@id="cntDetail"]')[0]
 
     # initialize output dictionary
-    output = {'ANUNCIO': url}
+    output = {}
 
     def extractTable(liList, spec, labelIdx=0, valIdx=1):
         output = {}
