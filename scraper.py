@@ -24,6 +24,15 @@ def scrapePage(pageString):
     # initialize output dictionary
     output = {}
 
+    # check if procedimiento is not found
+    alert = cntDetail.xpath('div[@class="alert"]')
+    if len(alert) == 1:
+        noSeEncuentra_str = ('El anuncio de este procedimiento de contratación'
+                             ' no se encuentra visible, favor de ponerse en'
+                             ' contacto con personal de la Unidad Compradora.')
+        if alert[0].text_content().strip() == noSeEncuentra_str:
+            return(output)
+
     def extractTable(liList, spec, labelIdx=0, valIdx=1):
         output = {}
         assert len(liList) == len(spec)
@@ -171,64 +180,93 @@ def scrapeURL(url):
         return({})
     else:
         # get page and check status for error
-        page = requests.get(url)
+        session = requests.session()
+        page = session.get(url)
         page.raise_for_status()
         output = scrapePage(page.content)
         return(output)
 
 
-def scrapeURL_wrapper(args):
-    index, url, queue, halt, error, terminate = args
-    if not halt.is_set():
-        try:
-            requested.add(index)
+#def scrapeURL_wrapper(args):
+#    index, url, queue, halt, error, terminate = args
+#    if not halt.is_set():
+#        try:
+#            requested.add(index)
+#            output = scrapeURL(url)
+#            queue.put((index, output))
+#        except Exception as e:
+#            halt.set()
+#            error.set((e, traceback.format_exc()))
+#            terminate.set()
+#
+#
+#df_cont14 = pd.read_excel("data/raw/Contratos2014.xlsx").assign(year='2014')
+#
+#outputs = {}
+#requested = set()
+#dataframe = df_cont14
+#n_processes = 1
+#
+#while len(outputs) < len(dataframe):
+#    manager = Manager()
+#    pool = Pool(n_processes)
+#    queue = manager.Queue()
+#    halt = manager.Event()
+#    terminate = manager.Event()
+#    error = manager.Value(tuple, None)
+#
+#    indices = list(set(range(len(dataframe))).difference(set(outputs.keys())))
+#    result = pool.map_async(scrapeURL_wrapper,
+#                            [(index, dataframe['ANUNCIO'].iloc[index], queue, halt, error, terminate)
+#                             for index in indices])
+#                            #error_callback=callback)
+#    with tqdm(total=len(dataframe)) as pbar:
+#        while not result.ready():
+#            if terminate.is_set():
+#                pool.terminate()
+#                break
+#            if not queue.empty():
+#                index, value = queue.get()
+#                outputs[index] = value
+#                pbar.update()
+#
+#    if error.get() is not None:
+#        e, format_exc = error.get()
+#        if isinstance(e, requests.exceptions.HTTPError) and e.response.status_code == 429:
+#            warnings.warn("Too many requests, pausing for 150 minutes...")
+#            for _ in trange(9059):
+#                time.sleep(1)
+#        else:
+#            print(format_exc, file=sys.stderr)
+#            break
+
+
+urls = pd.read_csv('data/raw/urls13.txt', header=None, squeeze=True, skip_blank_lines=False)
+
+try:
+    print("Continuing collection at index {}".format(index))
+except:
+    output_dict = {}
+    index = 0
+
+while len(output_dict) < len(urls):
+    try:
+        for url in tqdm(urls[index:]):
             output = scrapeURL(url)
-            queue.put((index, output))
-        except Exception as e:
-            halt.set()
-            error.set((e, traceback.format_exc()))
-            terminate.set()
-
-
-df_cont14 = pd.read_excel("data/raw/Contratos2014.xlsx").assign(year='2014')
-
-outputs = {}
-requested = set()
-dataframe = df_cont14
-n_processes = 4
-
-while len(outputs) < len(dataframe):
-    manager = Manager()
-    pool = Pool(4)
-    queue = manager.Queue()
-    halt = manager.Event()
-    terminate = manager.Event()
-    error = manager.Value(tuple, None)
-
-    indices = list(set(range(len(dataframe))).difference(set(outputs.keys())))
-    result = pool.map_async(scrapeURL_wrapper,
-                            [(index, dataframe['ANUNCIO'].iloc[index], queue, halt, error, terminate)
-                             for index in indices])
-                            #error_callback=callback)
-    with tqdm(total=len(dataframe)) as pbar:
-        while not result.ready():
-            if terminate.is_set():
-                pool.terminate()
-                break
-            if not queue.empty():
-                index, value = queue.get()
-                outputs[index] = value
-                pbar.update()
-
-    if error.get() is not None:
-        e, format_exc = error.get()
-        if isinstance(e, requests.exceptions.HTTPError) and e.response.status_code == 429:
-            warnings.warn("Too many requests, pausing for 150 minutes...")
-            for _ in trange(9059):
-                time.sleep(1)
+            output_dict[index] = output
+            index += 1
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code != 429:
+            raise e
         else:
-            print(format_exc, file=sys.stderr)
-            break
+            delay = int(re.search("retry in ([0-9]+) sec",
+                                  str(e.response.content)).group(1)) + 30
+            warnings.warn("Too many requests, pausing for {} seconds...".format(delay))
+            for _ in trange(delay):
+                time.sleep(1)
 
-output_df = pd.DataFrame(outputs[i] for i in range(len(dataframe)))
-output_df.to_csv('data/interim/scraper_output14.csv', index=False)
+
+assert set(output_dict.keys()) == set(range(len(urls)))
+
+output_df = pd.DataFrame(output_dict[i] for i in range(len(urls)))
+output_df.to_csv('data/interim/scraper_output13.csv', index=False)
