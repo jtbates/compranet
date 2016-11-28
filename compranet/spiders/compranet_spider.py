@@ -12,11 +12,15 @@ class CompraNetSpider(scrapy.Spider):
     name = "compranet"
     too_many_requests = False
 
+    def __init__(self, urlpath=None, outpath=None, *args, **kwargs):
+         super(MySpider, self).__init__(*args, **kwargs)
+         self.urls = urls
+
     def start_requests(self):
-        with open('data/raw/urls13.txt') as urlfile:
+        with open(urlpath) as urlfile:
             urls = [line.strip() for line in urlfile]
 
-        with open('data/interim/crawl13.jl') as outfile:
+        with open(outpath) as outfile:
             crawled_urls = set(json.loads(line)['ANUNCIO'].strip()
                                for line in outfile)
 
@@ -41,13 +45,14 @@ class CompraNetSpider(scrapy.Spider):
                 time.sleep(1)
             self.too_many_requests = False
             return response.request
+        # another thread has hit the rate limit, wait until it lapses
         while self.too_many_requests:
             time.sleep(1)
 
         # initialize output dictionary
         output = {'ANUNCIO': response.meta['ANUNCIO']}
 
-        # FIXME: this parses twice, rewrite to use scrapy selectors instead 
+        # FIXME: this parses twice, rewrite to use scrapy selectors instead
         # of lxml?
         pageString = response.body
 
