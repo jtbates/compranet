@@ -41,7 +41,7 @@ def pull_xlsx_cmd():
 
 @click.command()
 def create_db():
-    """Create the database tables if they do not exist"""
+    """Create database tables if they do not exist"""
     database.create_all()
 
 @click.command()
