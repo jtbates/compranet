@@ -8,14 +8,15 @@ from .xlsx import fetch_xlsx, load_xlsx, pull_xlsx
 
 
 @click.group()
-@click.option('--email-log', is_flag=True)
+@click.option('--email-log', is_flag=True,
+              help='Send logs to email.')
 def cli(email_log):
     if email_log:
         logger = logging.getLogger('compranet')
         logger.addHandler(settings.smtp_handler)
 
 @click.command('fetch_xlsx',
-               short_help="Check for updated xlsx files and download them")
+               short_help="Check for updated xlsx files and download them.")
 def fetch_xlsx_cmd():
     """Check the timestamps of the Excel archive URLs to see if they have been
     updated. When there is a newer version, download the zip file and extract
@@ -23,7 +24,7 @@ def fetch_xlsx_cmd():
     fetch_xlsx()
 
 @click.command('load_xlsx',
-               short_help="Process and load updates from Excel file")
+               short_help="Process and load updates from Excel file.")
 @click.argument('path', type=click.Path(exists=True, dir_okay=False))
 def load_xlsx_cmd(path):
     """Read the data from the Excel file located at PATH, calculate the
@@ -31,7 +32,7 @@ def load_xlsx_cmd(path):
     load_xlsx(path)
 
 @click.command('pull_xlsx',
-               short_help="Download, process, and load updated Excel files")
+               short_help="Download, process, and load updated Excel files.")
 def pull_xlsx_cmd():
     """Check the timestamps of the Excel archive URLs to see if they have been
     updated. When there is a newer version, download the zip file and extract
@@ -41,7 +42,7 @@ def pull_xlsx_cmd():
 
 @click.command()
 def create_db():
-    """Create database tables if they do not exist"""
+    """Create database tables if they do not exist."""
     database.create_all()
 
 @click.command()
