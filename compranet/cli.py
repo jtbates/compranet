@@ -1,12 +1,18 @@
+import logging
+
 import click
 
 from . import database
+from . import settings
 from .xlsx import fetch_xlsx, load_xlsx, pull_xlsx
 
 
 @click.group()
-def cli():
-    pass
+@click.option('--email-log', is_flag=True)
+def cli(email_log):
+    if email_log:
+        logger = logging.getLogger('compranet')
+        logger.addHandler(settings.smtp_handler)
 
 @click.command('fetch_xlsx',
                short_help="Check for updated xlsx files and download them")
@@ -38,10 +44,18 @@ def create_db():
     """Create the database tables if they do not exist"""
     database.create_all()
 
+@click.command()
+def test_log():
+    logger = logging.getLogger('compranet')
+    logger.error('Test smtp')
+    logger.info('test2')
+
+
 cli.add_command(fetch_xlsx_cmd)
 cli.add_command(load_xlsx_cmd)
 cli.add_command(pull_xlsx_cmd)
 cli.add_command(create_db)
+cli.add_command(test_log)
 
 if __name__ == '__main__':
     cli()

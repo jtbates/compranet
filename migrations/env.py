@@ -9,7 +9,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 # load our modules
-from compranet_tracker import database, settings
+from compranet import database, settings
 
 
 # this is the Alembic Config object, which provides

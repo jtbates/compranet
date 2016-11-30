@@ -1,0 +1,39 @@
+[compranet]
+raw_dir = data/raw
+interim_dir = data/interim
+sqlite_db_path = %(interim_dir)s/compranet.db
+
+[email]
+user =
+password =
+email_to =
+email_subject =
+
+[loggers]
+keys = root, compranet
+
+[handlers]
+keys = console
+
+[formatters]
+keys = default
+
+[logger_root]
+level = WARN
+handlers = console
+qualname =
+
+[logger_compranet]
+level = DEBUG
+handlers =
+qualname = compranet
+
+[handler_console]
+class = StreamHandler
+args = (sys.stderr,)
+level = NOTSET
+formatter = default
+
+[formatter_default]
+format = %(asctime)s %(levelname)-8s %(name)-15s %(message)s
+datefmt = %Y-%m-%d %H:%M
