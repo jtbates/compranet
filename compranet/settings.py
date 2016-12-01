@@ -1,4 +1,5 @@
 import configparser
+import logging
 from logging.config import fileConfig
 import os
 
@@ -28,3 +29,7 @@ ALEMBIC_SCRIPT_LOCATION = rel2abs(main_cfg['alembic_script_location'])
 # Set up logging
 fileConfig(config_path)
 smtp_handler = BufferingSMTPHandler(**config['email'])
+default_fmt = config['formatter_default'].get('format', raw=True)
+default_datefmt = config['formatter_default'].get('datefmt', raw=True)
+default_formatter = logging.Formatter(default_fmt, default_datefmt)
+smtp_handler.setFormatter(default_formatter)
