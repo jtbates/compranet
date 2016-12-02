@@ -4,6 +4,7 @@ interim_dir = data/interim
 sqlite_db_path = %(interim_dir)s/compranet.db
 alembic_ini_path = alembic.ini
 alembic_script_location = migrations
+virtualenv_path = ~/.pyenv/versions/compranet
 
 [email]
 user =
