@@ -1,9 +1,12 @@
+import json
+
 from alembic.config import Config
 from alembic import command
 from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.types import TypeDecorator, VARCHAR
 
 from . import settings
 
@@ -27,6 +30,25 @@ def create_all(engine=engine):
 
 def get_session():
     return(Session())
+
+class JSONEncodedObject(TypeDecorator):
+    """Represents an immutable structure as a json-encoded string.
+
+    Usage::
+        JSONEncodedObject(255)
+    """
+
+    impl = VARCHAR
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            value = json.dumps(value)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            value = json.loads(value)
+        return value
 
 class ContratoXls(Base):
     __tablename__ = 'contratos_xls'
@@ -136,3 +158,57 @@ class SourceXls(Base):
     _SOURCE = Column(String, primary_key=True)
     _UPDATED = Column(DateTime, primary_key=True)
     SHA256 = Column(String)
+
+class ContratoWeb(Base):
+    __tablename__ = 'contratos_web'
+
+    ANUNCIO = Column(String, primary_key=True)
+    CARACTER = Column(String)
+    CODIGO_EXPEDIENTE = Column(String)
+    FECHA_APERTURA_PROPOSICIONES = Column(String)
+    FORMA_PROCEDIMIENTO = Column(String)
+    NOMBRE_DE_LA_UC = Column(String)
+    NUMERO_PROCEDIMIENTO = Column(String)
+    PROC_F_PUBLICACION = Column(String)
+    TIPO_CONTRATACION = Column(String)
+    TITULO_EXPEDIENTE = Column(String)
+    _ANEXOS_CP = Column(JSONEncodedObject) # list
+    _ANEXOS_OD = Column(JSONEncodedObject) # list
+    #_CONDITIONAL_PREFIX_FOR = Column(String) # 155 if _ANEOXS_CP not null
+    _CORREO_DEL_OPERADOR = Column(String)
+    _CREDITO_EXTERNO = Column(String)
+    _DESC_ANUNCIO = Column(String)
+    _ENTIDAD_FEDERATIVA = Column(String)
+    _EXCLUSIVO_MIPYMES = Column(String)
+    _NOMBRE_DEL_OPERADOR = Column(String)
+    _NOTAS = Column(String)
+    _PROCEDIMIENTOS = Column(JSONEncodedObject) # list
+    _UPDATED = Column(DateTime)
+
+class ContratoWebHistorial(Base):
+    __tablename__ = 'contratos_web_hist'
+
+    ANUNCIO = Column(String)
+    CARACTER = Column(String)
+    CODIGO_EXPEDIENTE = Column(String)
+    FECHA_APERTURA_PROPOSICIONES = Column(String)
+    FORMA_PROCEDIMIENTO = Column(String)
+    NOMBRE_DE_LA_UC = Column(String)
+    NUMERO_PROCEDIMIENTO = Column(String)
+    PROC_F_PUBLICACION = Column(String)
+    TIPO_CONTRATACION = Column(String)
+    TITULO_EXPEDIENTE = Column(String)
+    _ANEXOS_CP = Column(JSONEncodedObject) # list
+    _ANEXOS_OD = Column(JSONEncodedObject) # list
+    #_CONDITIONAL_PREFIX_FOR = Column(String) # 155 if _ANEOXS_CP not null
+    _CORREO_DEL_OPERADOR = Column(String)
+    _CREDITO_EXTERNO = Column(String)
+    _DESC_ANUNCIO = Column(String)
+    _ENTIDAD_FEDERATIVA = Column(String)
+    _EXCLUSIVO_MIPYMES = Column(String)
+    _NOMBRE_DEL_OPERADOR = Column(String)
+    _NOTAS = Column(String)
+    _PROCEDIMIENTOS = Column(JSONEncodedObject) # list
+    _UPDATED = Column(DateTime)
+    _REMOVED = Column(Boolean)
+    _ID = Column(Integer, primary_key=True, autoincrement=True)
