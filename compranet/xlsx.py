@@ -338,6 +338,7 @@ def load_source_df(df_new, sha256, session=session):
         cnt_unchanged = cnt_inserted = cnt_modified = cnt_deleted = 0
 
         def db_get_cc(cc, source):
+            # TODO: replace query with get
             rs = session.query(ContratoXls).filter(ContratoXls.CODIGO_CONTRATO == cc,
                                                    ContratoXls._SOURCE == source)
             assert rs.count() == 1
