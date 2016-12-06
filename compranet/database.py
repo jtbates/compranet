@@ -84,6 +84,7 @@ class ContratoXls(Base):
     APORTACION_FEDERAL = Column(Float)
     FECHA_CELEBRACION = Column(String) # DateTime, actually date in format %Y-%m-%d 00:00:00 GMT
     CONTRATO_MARCO = Column(Boolean)
+    IDENTIFICADOR_CM = Column(String)
     COMPRA_CONSOLIDADA = Column(Boolean)
     PLURIANUAL = Column(Boolean)
     CLAVE_CARTERA_SHCP = Column(String)
@@ -134,6 +135,7 @@ class ContratoXlsHistorial(Base):
     APORTACION_FEDERAL = Column(Float)
     FECHA_CELEBRACION = Column(String) # DateTime, actually date in format %Y-%m-%d 00:00:00 GMT
     CONTRATO_MARCO = Column(Boolean)
+    IDENTIFICADOR_CM = Column(String)
     COMPRA_CONSOLIDADA = Column(Boolean)
     PLURIANUAL = Column(Boolean)
     CLAVE_CARTERA_SHCP = Column(String)
