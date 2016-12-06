@@ -27,11 +27,13 @@ def fetch_xlsx_cmd():
 
 @click.command('load_xlsx',
                short_help="Process and load updates from Excel file.")
-@click.argument('path', type=click.Path(exists=True, dir_okay=False))
-def load_xlsx_cmd(path):
-    """Read the data from the Excel file located at PATH, calculate the
+@click.argument('paths', metavar='[FILE]...', nargs=-1,
+                type=click.Path(exists=True, dir_okay=False))
+def load_xlsx_cmd(paths):
+    """Read the data from the Excel file located at FILE, calculate the
     changes, and import these to the database."""
-    load_xlsx(path)
+    for path in paths:
+        load_xlsx(path)
 
 @click.command('pull_xlsx',
                short_help="Download, process, and load updated Excel files.")
