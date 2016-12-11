@@ -29,18 +29,23 @@ def load_jl(jl_path, updated, urls_path=None, skip_dup=False, session=session):
     jl = read_jl(jl_path)
     if urls_path is not None:
         with open(urls_path) as urls_file:
-            urls = urls_file.readlines()
+            urls = [url.strip() for url in urls_file.readlines()]
         assert len(urls) == len(jl)
 
     for idx, json_obj in enumerate(jl):
         json_obj['_UPDATED'] = updated
         if urls_path:
             json_obj['ANUNCIO'] = urls[idx]
+        anuncio = json_obj['ANUNCIO']
+        if anuncio == '':
+            continue
         if skip_dup:
-            anuncio = json_obj['ANUNCIO']
             qr = session.query(ContratoWeb).get(anuncio)
             if qr is None:
+                print("Adding {}".format(anuncio))
                 session.add(ContratoWeb(**json_obj))
+            else:
+                print("Skipping {}".format(anuncio))
         else:
             session.add(ContratoWeb(**json_obj))
         session.commit()
