@@ -9,10 +9,10 @@
 #     http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 #     http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'compranet'
+BOT_NAME = 'compranet_web'
 
-SPIDER_MODULES = ['compranet.spiders']
-NEWSPIDER_MODULE = 'compranet.spiders'
+SPIDER_MODULES = ['compranet.crawler.compranet_web.spiders']
+NEWSPIDER_MODULE = 'compranet.crawler.compranet_web.spiders'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -61,9 +61,9 @@ DOWNLOAD_DELAY = 0.9
 
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'compranet.pipelines.SomePipeline': 300,
-#}
+ITEM_PIPELINES = {
+    'compranet.crawler.compranet_web.pipelines.SqlitePipeline': 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html

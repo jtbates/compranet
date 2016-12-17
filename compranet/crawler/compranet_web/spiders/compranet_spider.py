@@ -1,4 +1,5 @@
 # coding: utf-8
+from datetime import datetime
 import json
 import logging
 import re
@@ -6,32 +7,24 @@ import time
 
 from lxml import html
 import pandas as pd
+import pytz
 import scrapy
 
 class CompraNetSpider(scrapy.Spider):
-    name = "compranet"
+    name = "compranet_web"
     too_many_requests = False
 
-    def __init__(self, urlpath=None, outpath=None, *args, **kwargs):
-         super(MySpider, self).__init__(*args, **kwargs)
-         self.urls = urls
-
-    def start_requests(self):
-        with open(urlpath) as urlfile:
-            urls = [line.strip() for line in urlfile]
-
-        with open(outpath) as outfile:
-            crawled_urls = set(json.loads(line)['ANUNCIO'].strip()
-                               for line in outfile)
-
-        for url in urls:
-            if url in crawled_urls or not url:
-                continue
+    def __init__(self, urls=None, *args, **kwargs):
+        super(CompraNetSpider, self).__init__(*args, **kwargs)
+        # urls may be a list of urls or a path to a text file containing
+        # one url per line
+        if urls:
+            if isinstance(urls, list):
+                self.start_urls = urls
             else:
-                req = scrapy.Request(url=url, callback=self.parse)
-                req.meta['ANUNCIO'] = url
-                yield req
-
+                with open(urls) as urlfile:
+                    urls_list = [line.strip() for line in urlfile]
+                    self.start_urls = urls_list
 
     def parse(self, response):
         # check for rate limiting
@@ -50,7 +43,13 @@ class CompraNetSpider(scrapy.Spider):
             time.sleep(1)
 
         # initialize output dictionary
-        output = {'ANUNCIO': response.meta['ANUNCIO']}
+        now = datetime.now(pytz.utc)
+        output = {}
+        output['_UPDATED'] = now
+        if response.meta['redirect_times'] > 0:
+            output['ANUNCIO'] = response.meta['redirect_urls'][0]
+        else:
+            output['ANUNCIO'] = response.url
 
         # FIXME: this parses twice, rewrite to use scrapy selectors instead
         # of lxml?
@@ -111,7 +110,7 @@ class CompraNetSpider(scrapy.Spider):
         # variation 1, contains only Detalles del Procedimiento section
         curList = cntDetail.xpath('table[@id="conditionalPrefixFor_92"]/tr')
         if len(curList) > 0:
-            output['_CONDITIONAL_PREFIX_FOR'] = 92
+            #output['_CONDITIONAL_PREFIX_FOR'] = 92
             assert curList[0].xpath('th/h4')[0].text == 'Detalles del Procedimiento'
             assert curList[1].attrib['class'] == 'accessHidden'
             curList = curList[2:]
@@ -130,7 +129,7 @@ class CompraNetSpider(scrapy.Spider):
         curList = cntDetail.xpath('table[@id="conditionalPrefixFor_155"]/tr')
         if len(curList) > 0:
             # v2 Detalles del Procedimiento
-            output['_CONDITIONAL_PREFIX_FOR'] = 155
+            #output['_CONDITIONAL_PREFIX_FOR'] = 155
             assert 'NUMERO_PROCEDIMIENTO' not in output
             assert curList[0].xpath('th/h4')[0].text == 'DATOS GENERALES DEL PROCEDIMIENTO DE CONTRATACIÓN'
             assert curList[1].attrib['class'] == 'accessHidden'

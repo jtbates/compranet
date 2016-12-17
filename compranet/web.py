@@ -1,8 +1,14 @@
 import json
 import logging
+import os
+
+from scrapy.crawler import CrawlerProcess
+from scrapy.utils.project import get_project_settings
 
 from .database import get_session
 from .database import ContratoWeb, ContratoWebHistorial
+from .database import ContratoXls
+from .crawler.compranet_web.spiders.compranet_spider import CompraNetSpider
 
 
 logger = logging.getLogger('compranet.web')
@@ -50,5 +56,21 @@ def load_jl(jl_path, updated, urls_path=None, skip_dup=False, session=session):
             session.add(ContratoWeb(**json_obj))
         session.commit()
 
+def scrape_missing(source=None):
+    #TODO: add support for tracking scraper history
+    settings_module = 'compranet.crawler.compranet_web.settings'
+    os.environ['SCRAPY_SETTINGS_MODULE'] = settings_module
+    session = get_session()
+    w_urls = set(x[0] for x in session.query(ContratoWeb.ANUNCIO).all())
+    if source is None:
+        x_urls = set(x[0] for x in session.query(ContratoXls.ANUNCIO).all())
+    else:
+        xls_query = (session.query(ContratoXls.ANUNCIO)
+                     .filter(ContratoXls._SOURCE == source))
+        x_urls = set(x[0] for x in xls_query.all())
+    urls_to_scrape = list(x_urls.difference(w_urls))
+    process = CrawlerProcess(get_project_settings())
+    process.crawl(CompraNetSpider, urls=urls_to_scrape)
+    process.start()
 
 
