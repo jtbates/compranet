@@ -35,7 +35,8 @@ XLSX_RE = re.compile(XLSX_RE_STR)
 #LAST_MOD_STRFTIME = "%a, %d %b %Y %H:%M:%S %Z"
 TZ_CDMX = dateutil.tz.gettz('Mexico/General')
 
-ALL_YEARS = ('2015', '2016', '2017')
+NOW_YEAR = datetime.now(TZ_CDMX).year
+ALL_YEARS = (str(year) for year in range(2015, NOW_YEAR))
 
 
 def find_xlsx(years=ALL_YEARS, base_dir=RAW_DIR):
@@ -99,53 +100,56 @@ def fetch_xlsx(years=ALL_YEARS, raw_dir=RAW_DIR, rm_zip=True):
     downloaded = []
 
     for year in years:
-        zip_name = ZIP_FORMAT.format(year=year)
-        url = URL_PREFIX + zip_name
+        try:
+            zip_name = ZIP_FORMAT.format(year=year)
+            url = URL_PREFIX + zip_name
 
-        # Check if there is a previously downloaded file
-        latest_list = latest_xlsx([year])
-        if latest_list:
-            # Find the time that the latest local file was generated
-            loc_time = pathname_to_updatetime(latest_list[-1])
+            # Check if there is a previously downloaded file
+            latest_list = latest_xlsx([year])
+            if latest_list:
+                # Find the time that the latest local file was generated
+                loc_time = pathname_to_updatetime(latest_list[-1])
 
-            # Find the last modified time of file on server
-            resp = requests.get(url, stream=True, verify=False)
-            last_mod = resp.headers['Last-Modified']
-            srv_time = dateutil.parser.parse(last_mod)
+                # Find the last modified time of file on server
+                resp = requests.get(url, stream=True, verify=False)
+                last_mod = resp.headers['Last-Modified']
+                srv_time = dateutil.parser.parse(last_mod)
 
-            msg = ("The server version of {} was modified at {}, "
-                   "{} after the local file was generated")
-            logger.info(msg.format(zip_name, srv_time, srv_time - loc_time))
+                msg = ("The server version of {} was modified at {}, "
+                       "{} after the local file was generated")
+                logger.info(msg.format(zip_name, srv_time, srv_time - loc_time))
 
-            # There is some delay between generating the zip file and
-            # uploading it to the server, usually less than 30 minutes.
-            # Let's skip downloading the file if the last modified time
-            # on the server is less than 6 hours after the time that our
-            # local file was generated.
-            if srv_time < (loc_time + relativedelta(hours=+6)):
-                logger.info("Skipping the download of {}".format(zip_name))
-                continue
+                # There is some delay between generating the zip file and
+                # uploading it to the server, usually less than 30 minutes.
+                # Let's skip downloading the file if the last modified time
+                # on the server is less than 6 hours after the time that our
+                # local file was generated.
+                if srv_time < (loc_time + relativedelta(hours=+6)):
+                    logger.info("Skipping the download of {}".format(zip_name))
+                    continue
 
-        # There is a newer version or force is True, so we download
-        print("Downloading {}...".format(zip_name))
-        zip_path = os.path.join(raw_dir, zip_name)
-        response = requests.get(url, stream=True, verify=False)
-        if response.status_code == 200:
-            with open(zip_path, 'wb') as f:
-                shutil.copyfileobj(response.raw, f)
+            # There is a newer version or force is True, so we download
+            print("Downloading {}...".format(zip_name))
+            zip_path = os.path.join(raw_dir, zip_name)
+            response = requests.get(url, stream=True, verify=False)
+            if response.status_code == 200:
+                with open(zip_path, 'wb') as f:
+                    shutil.copyfileobj(response.raw, f)
 
-        # Extract the xlsx from the zip file
-        logger.info("Extracting {}...".format(zip_name))
-        with zipfile.ZipFile(zip_path, 'r') as zf:
-            for member in zf.namelist():
-                zf.extract(member, raw_dir)
-                downloaded.append(os.path.join(raw_dir, member))
-            zf.extractall(raw_dir)
+            # Extract the xlsx from the zip file
+            logger.info("Extracting {}...".format(zip_name))
+            with zipfile.ZipFile(zip_path, 'r') as zf:
+                for member in zf.namelist():
+                    zf.extract(member, raw_dir)
+                    downloaded.append(os.path.join(raw_dir, member))
+                zf.extractall(raw_dir)
 
-        if rm_zip:
-            # Trash the zip file after extracting
-            logger.info("Deleting {}...".format(zip_name))
-            send2trash(zip_path)
+            if rm_zip:
+                # Trash the zip file after extracting
+                logger.info("Deleting {}...".format(zip_name))
+                send2trash(zip_path)
+        except:
+            logger.exception("Error while downloading {}".format(zip_name))
 
     return(downloaded)
 
@@ -424,7 +428,7 @@ def load_xlsx(pathname, session=session):
         load_source_df(df_new, sha256, session)
         logger.info("Successfully imported data from {}".format(filename))
     except:
-        logger.error("Failed to import data from {}".format(filename))
+        logger.exception("Failed to import data from {}".format(filename))
 
 def pull_xlsx(years=ALL_YEARS, session=session):
     """
