@@ -36,7 +36,7 @@ XLSX_RE = re.compile(XLSX_RE_STR)
 TZ_CDMX = dateutil.tz.gettz('Mexico/General')
 
 NOW_YEAR = datetime.now(TZ_CDMX).year
-ALL_YEARS = (str(year) for year in range(2015, NOW_YEAR))
+ALL_YEARS = (str(year) for year in range(2015, NOW_YEAR + 1))
 
 
 def find_xlsx(years=ALL_YEARS, base_dir=RAW_DIR):
