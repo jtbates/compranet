@@ -25,7 +25,7 @@ logger = logging.getLogger('compranet.xlsx')
 session = get_session()
 
 RAW_DIR = settings.RAW_DIR
-URL_PREFIX = 'http://upcp.funcionpublica.gob.mx/descargas/'
+URL_PREFIX = 'http://upcp.hacienda.gob.mx/descargas/'
 ZIP_FORMAT = "Contratos{year}.zip"
 DATETIME_ARGS = ['year', 'month', 'day', 'hour', 'minute', 'second']
 DATETIME_RE_STR = ''.join("(?P<{}>\d{{2}})".format(e) for e in DATETIME_ARGS)
